@@ -1,38 +1,10 @@
-const RESEND_ENDPOINT = "https://api.resend.com/emails";
-const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
-const RATE_LIMIT_MAX_REQUESTS = 3;
+import crypto from "node:crypto";
+import { getRedis } from "./_lib/redis.js";
+import { sendEmail, escapeHtml, emailFooter, OWNER_EMAIL, FROM_EMAIL } from "./_lib/email.js";
+import { createRateLimiter, getClientIp } from "./_lib/rateLimit.js";
 
-// In-memory only: resets on cold start and isn't shared across concurrent
-// function instances. Good enough to stop rapid-fire clicking/basic bots;
-// swap for Vercel KV/Upstash if determined spam becomes a problem.
-const submissionsByIp = new Map();
-
-function getClientIp(req) {
-  const forwarded = req.headers?.["x-forwarded-for"];
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return req.socket?.remoteAddress || "unknown";
-}
-
-function isRateLimited(ip) {
-  const now = Date.now();
-  const timestamps = (submissionsByIp.get(ip) || []).filter(
-    (t) => now - t < RATE_LIMIT_WINDOW_MS
-  );
-
-  if (timestamps.length >= RATE_LIMIT_MAX_REQUESTS) {
-    submissionsByIp.set(ip, timestamps);
-    return true;
-  }
-
-  timestamps.push(now);
-  submissionsByIp.set(ip, timestamps);
-  return false;
-}
-
-const OWNER_EMAIL = "gqwebworks@gmail.com";
-const SITE_URL = "https://gqwebworks.com";
-const LOGO_URL = `${SITE_URL}/images/gqwebworkslogo.png`;
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "GQWebworks <hello@gqwebworks.com>";
+const isRateLimited = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 3 });
+const MESSAGES_KEEP = 500;
 
 const PROJECT_TYPE_LABELS = {
   website: "Website Development",
@@ -42,33 +14,8 @@ const PROJECT_TYPE_LABELS = {
   other: "Other",
 };
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function emailFooter() {
-  return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px;padding-top:20px;border-top:1px solid #e4e4df;">
-      <tr>
-        <td style="text-align:center;">
-          <img src="${LOGO_URL}" alt="GQWebworks" width="40" height="40" style="display:inline-block;border-radius:8px;" />
-          <p style="margin:10px 0 2px;font-family:Helvetica,Arial,sans-serif;font-size:13px;font-weight:700;color:#141414;">GQWebworks</p>
-          <p style="margin:0;font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#6a6a66;">
-            Rio Grande Valley &amp; beyond · <a href="${SITE_URL}" style="color:#f26b1d;text-decoration:none;">gqwebworks.com</a>
-          </p>
-        </td>
-      </tr>
-    </table>
-  `;
 }
 
 function ownerEmailHtml({ name, email, company, phone, projectType, message, submittedAt }) {
@@ -123,22 +70,16 @@ function clientEmailHtml({ name }) {
   `;
 }
 
-async function sendEmail(payload) {
-  const response = await fetch(RESEND_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESENDAPI_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    throw new Error(`Resend request failed (${response.status}): ${detail}`);
+async function storeMessage(entry) {
+  try {
+    const redis = getRedis();
+    await redis.lpush("messages", JSON.stringify(entry));
+    await redis.ltrim("messages", 0, MESSAGES_KEEP - 1);
+  } catch (error) {
+    // Storage is a nice-to-have for the admin inbox; never block the
+    // visitor's submission (or the emails, which already went out) on it.
+    console.error("Failed to store contact message:", error);
   }
-
-  return response.json();
 }
 
 export default async function handler(req, res) {
@@ -186,12 +127,31 @@ export default async function handler(req, res) {
       html: ownerEmailHtml({ name, email, company, phone, projectType, message, submittedAt }),
     });
 
-    await sendEmail({
-      from: FROM_EMAIL,
-      to: email,
-      subject: "Thanks for reaching out to GQWebworks",
-      html: clientEmailHtml({ name }),
+    await storeMessage({
+      id: crypto.randomUUID(),
+      name,
+      email,
+      company: company || "",
+      phone: phone || "",
+      projectType: projectType || "",
+      message,
+      submittedAt,
+      receivedAt: Date.now(),
     });
+
+    try {
+      await sendEmail({
+        from: FROM_EMAIL,
+        to: email,
+        subject: "Thanks for reaching out to GQWebworks",
+        html: clientEmailHtml({ name }),
+      });
+    } catch (error) {
+      // The inquiry already reached the owner and is stored — don't fail
+      // the visitor's submission just because the confirmation email
+      // (a nice-to-have) didn't go out.
+      console.error("Client confirmation email failed:", error);
+    }
 
     return res.status(200).json({ ok: true });
   } catch (error) {

@@ -1,57 +1,54 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Reveal from "../components/Reveal.jsx";
 
-const demos = [
-  {
-    name: "JCBM",
-    url: "https://jcbm-b9re.vercel.app/",
-    description: "Professional business website",
-    type: "Business presence",
-    color: "#214845",
-  },
-  {
-    name: "Law Firm Website",
-    url: "https://law-firm-web-site.vercel.app/",
-    description: "Legal practice website",
-    type: "Professional services",
-    color: "#33425b",
-  },
-  {
-    name: "Law Firm Template",
-    url: "https://lawfirmtemplatetest.vercel.app/",
-    description: "Law firm template design",
-    type: "Editorial template",
-    color: "#74453b",
-  },
-  {
-    name: "Coffee Shop",
-    url: "https://coffeeshop-phi-black.vercel.app/",
-    description: "Coffee business website",
-    type: "Hospitality",
-    color: "#a57945",
-  },
-  {
-    name: "Construction Web",
-    url: "https://construction-web-plum.vercel.app/",
-    description: "Construction company site",
-    type: "Trade services",
-    color: "#3d4b42",
-  },
-];
-
-const sideProjects = [
-  {
-    name: "Malware AI Detection",
-    url: "https://malware-ai-detection.vercel.app/",
-    description: "Malware identifier using machine learning algorithms to determine whether a link being entered is malicious or not",
-    type: "Machine learning",
-    color: "#e6e0d3",
-  },
-];
+function ProjectCard({ project, index, featured }) {
+  return (
+    <Reveal delay={index * 80}>
+      <a
+        href={project.url}
+        target="_blank"
+        rel="noreferrer"
+        className={`portfolio-card ${featured ? "portfolio-card-featured" : ""}`}
+      >
+        <div className="browser-chrome" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <p>{new URL(project.url).hostname}</p>
+        </div>
+        <div className="portfolio-preview" style={{ background: project.color }}>
+          <iframe
+            className="portfolio-preview-frame"
+            src={project.url}
+            title={`${project.name} live website preview`}
+            loading="lazy"
+            tabIndex="-1"
+          />
+        </div>
+        <div className="portfolio-caption">
+          <div>
+            <span className="portfolio-type">{project.type}</span>
+            <h3>{project.name}</h3>
+            <p>{project.description}</p>
+          </div>
+          <span className="portfolio-arrow" aria-hidden="true">↗</span>
+        </div>
+      </a>
+    </Reveal>
+  );
+}
 
 export default function Portfolio() {
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    fetch("/api/portfolio")
+      .then((r) => r.json())
+      .then(setData)
+      .catch(() => setError("Could not load the portfolio right now."));
   }, []);
 
   return (
@@ -72,102 +69,43 @@ export default function Portfolio() {
           </p>
         </Reveal>
 
-        <div className="portfolio-grid">
-          {demos.map((demo, i) => (
-            <Reveal key={demo.url} delay={i * 80}>
-              <a
-                href={demo.url}
-                target="_blank"
-                rel="noreferrer"
-                className={`portfolio-card ${i === 0 ? "portfolio-card-featured" : ""}`}
-              >
-                <div className="browser-chrome" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                  <p>{new URL(demo.url).hostname}</p>
-                </div>
-                <div
-                  className="portfolio-preview"
-                  style={{ background: demo.color }}
-                >
-                  <iframe
-                    className="portfolio-preview-frame"
-                    src={demo.url}
-                    title={`${demo.name} live website preview`}
-                    loading="lazy"
-                    tabIndex="-1"
-                  />
-                </div>
-                <div className="portfolio-caption">
-                  <div>
-                    <span className="portfolio-type">{demo.type}</span>
-                    <h3>{demo.name}</h3>
-                    <p>{demo.description}</p>
-                  </div>
-                  <span className="portfolio-arrow" aria-hidden="true">↗</span>
-                </div>
-              </a>
-            </Reveal>
-          ))}
-        </div>
+        {error && <p className="form-status form-status-error">{error}</p>}
+        {!data && !error && <p className="admin-empty">Loading…</p>}
+
+        {data && (
+          <div className="portfolio-grid">
+            {data.demos.map((project, i) => (
+              <ProjectCard key={project.id} project={project} index={i} featured={i === 0} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <div className="rule">
-        <span className="rule-line" />
-      </div>
+      {data && data.sideProjects.length > 0 && (
+        <>
+          <div className="rule">
+            <span className="rule-line" />
+          </div>
 
-      <section className="skills">
-        <Reveal>
-          <h2>
-            Side <em>projects</em>
-          </h2>
-          <p className="lede tight">
-            Experimental projects exploring new technologies and solving unique
-            problems.
-          </p>
-        </Reveal>
-
-        <div className="portfolio-grid">
-          {sideProjects.map((project, i) => (
-            <Reveal key={project.url} delay={i * 80}>
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noreferrer"
-                className="portfolio-card portfolio-card-featured"
-              >
-                <div className="browser-chrome" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                  <p>{new URL(project.url).hostname}</p>
-                </div>
-                <div
-                  className="portfolio-preview"
-                  style={{ background: project.color }}
-                >
-                  <iframe
-                    className="portfolio-preview-frame"
-                    src={project.url}
-                    title={`${project.name} live website preview`}
-                    loading="lazy"
-                    tabIndex="-1"
-                  />
-                </div>
-                <div className="portfolio-caption">
-                  <div>
-                    <span className="portfolio-type">{project.type}</span>
-                    <h3>{project.name}</h3>
-                    <p>{project.description}</p>
-                  </div>
-                  <span className="portfolio-arrow" aria-hidden="true">↗</span>
-                </div>
-              </a>
+          <section className="skills">
+            <Reveal>
+              <h2>
+                Side <em>projects</em>
+              </h2>
+              <p className="lede tight">
+                Experimental projects exploring new technologies and solving unique
+                problems.
+              </p>
             </Reveal>
-          ))}
-        </div>
-      </section>
+
+            <div className="portfolio-grid">
+              {data.sideProjects.map((project, i) => (
+                <ProjectCard key={project.id} project={project} index={i} featured />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       <div className="cta-row">
         <span className="arrows arrows-left" aria-hidden="true">

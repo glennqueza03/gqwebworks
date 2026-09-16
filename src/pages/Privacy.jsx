@@ -21,6 +21,12 @@ export default function Privacy() {
             number, company name, and any messages you send. We also collect
             information when you schedule a consultation through our booking system.
           </p>
+          <p>
+            We also use Vercel Web Analytics to understand overall site traffic (pages
+            visited, general location, device type). This is a cookieless, privacy-friendly
+            analytics tool — it does not use tracking cookies and does not build an
+            individual profile of you.
+          </p>
 
           <h2>How We Use Your Information</h2>
           <p>
@@ -32,16 +38,23 @@ export default function Privacy() {
 
           <h2>Data Storage and Security</h2>
           <p>
-            We take reasonable measures to protect your personal information from
-            unauthorized access, use, or disclosure. Your information is stored securely
-            and is only accessible by authorized personnel.
+            Messages submitted through our contact form are stored in a secured
+            database so we can review and respond to inquiries, and are only
+            accessible to GQWebworks through a password-protected admin panel. We take
+            reasonable measures to protect your personal information from unauthorized
+            access, use, or disclosure, including encrypted connections and access
+            controls on our systems.
           </p>
 
           <h2>Third-Party Services</h2>
           <p>
-            We use Cal.com for appointment scheduling. When you use our booking
+            We rely on a small number of service providers to run this site: Vercel
+            (hosting and analytics), Resend (sending email), and a managed Redis
+            database provider (storing contact form submissions and portfolio content).
+            We use Cal.com for appointment scheduling — when you use our booking
             system, your information is processed according to Cal.com's privacy
-            policy. We use email communication to respond to your inquiries.
+            policy. Each of these providers processes data on our behalf and is
+            subject to its own privacy policy.
           </p>
 
           <h2>Your Rights</h2>

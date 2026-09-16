@@ -23,6 +23,11 @@ export default function Footer() {
             </svg>
           </a>
         </div>
+        <div className="footer-legal">
+          <Link to="/privacy">Privacy Policy</Link>
+          <span aria-hidden="true">·</span>
+          <Link to="/terms">Terms of Service</Link>
+        </div>
       </div>
     </footer>
   );

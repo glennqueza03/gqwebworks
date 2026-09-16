@@ -6,7 +6,10 @@ function apiDevMiddleware() {
     name: "api-dev-middleware",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        if (req.url !== "/api/contact") return next();
+        if (!req.url?.startsWith("/api/")) return next();
+
+        const url = new URL(req.url, "http://localhost");
+        const modulePath = `/api${url.pathname.replace(/^\/api/, "")}.js`;
 
         try {
           const chunks = [];
@@ -17,7 +20,18 @@ function apiDevMiddleware() {
           req.body = {};
         }
 
-        const mod = await server.ssrLoadModule("/api/contact.js");
+        req.query = Object.fromEntries(url.searchParams);
+
+        let mod;
+        try {
+          mod = await server.ssrLoadModule(modulePath);
+        } catch (error) {
+          res.statusCode = 404;
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify({ error: `No API route at ${url.pathname}` }));
+          return;
+        }
+
         const handler = mod.default;
 
         let statusCode = 200;
@@ -37,7 +51,7 @@ function apiDevMiddleware() {
         try {
           await handler(req, devRes);
         } catch (error) {
-          console.error("api/contact.js dev handler error:", error);
+          console.error(`${modulePath} dev handler error:`, error);
           res.statusCode = 500;
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify({ error: "Dev server error, see terminal." }));
