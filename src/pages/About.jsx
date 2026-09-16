@@ -33,10 +33,12 @@ export default function About() {
               Building from the <em>Rio Grande Valley</em>
             </h2>
             <p>
-              I'm a Computer Science graduate from UTRGV, based in the Rio Grande
-              Valley. GQWebworks is my practice — websites, automations, and
-              applied data work for teams that need something sharper than a
-              template.
+              I'm a Computer Science graduate from UTRGV, based in the Rio
+              Grande Valley. GQWebworks is my practice — websites, automations,
+              and applied data work for teams that need something sharper than
+              a template. I'm local to the RGV, but I work with businesses
+              anywhere — every project is handled remotely from first call to
+              launch.
             </p>
             <p>
               I hold an IBM certificate in Python for Data Science, AI, and
@@ -121,10 +123,11 @@ export default function About() {
           </Reveal>
           <Reveal delay={160}>
             <article className="about-card">
-              <h3>Local Focus</h3>
+              <h3>Local Roots, Remote Reach</h3>
               <p>
-                Based in the Rio Grande Valley. I understand local businesses
-                and build solutions that fit the community, not generic templates.
+                Based in the Rio Grande Valley, and open to businesses
+                anywhere — every project runs remotely, so location is never a
+                limit.
               </p>
             </article>
           </Reveal>

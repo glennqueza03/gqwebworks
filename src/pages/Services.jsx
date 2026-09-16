@@ -36,9 +36,9 @@ export default function Services() {
 
       <Reveal delay={80}>
         <p className="lede">
-          As an independent expert with over a decade of experience, I offer
-          tailored web design and development services that align with your
-          business goals and deliver long-term value.
+          As an independent, experienced expert, I offer tailored web design
+          and development services that align with your business goals and
+          deliver long-term value.
         </p>
       </Reveal>
 

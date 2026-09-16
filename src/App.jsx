@@ -12,6 +12,7 @@ import Terms from "./pages/Terms.jsx";
 export default function App() {
   return (
     <>
+      <div className="mesh-bg" aria-hidden="true" />
       <div className="page-grid" aria-hidden="true" />
       <div className="grain" aria-hidden="true" />
       <CursorGlow />

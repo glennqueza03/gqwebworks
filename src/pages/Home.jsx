@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Reveal from "../components/Reveal.jsx";
+import SuccessModal from "../components/SuccessModal.jsx";
 
 const pills = [
   { label: "PYTHON FOR DATA SCIENCE", rot: 5, x: 12, y: -6 },
@@ -55,7 +56,7 @@ const faqs = [
   },
   {
     q: "Are you only taking Rio Grande Valley clients?",
-    a: "The RGV is home, and I like building here. Remote work is welcome when the project is a fit.",
+    a: "No. The RGV is home and I love building here, but I work with businesses anywhere — everything is handled remotely, from first call to launch.",
   },
   {
     q: "How do we start?",
@@ -95,10 +96,51 @@ function Mark({ ok }) {
 export default function Home() {
   const [open, setOpen] = useState(0);
   const [activeTab, setActiveTab] = useState("message");
+  const [formStatus, setFormStatus] = useState("idle");
+  const [formError, setFormError] = useState("");
+  const [sentName, setSentName] = useState("");
+
+  async function handleContactSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    setFormStatus("sending");
+    setFormError("");
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectType: data["project-type"],
+          name: data.name,
+          email: data.email,
+          company: data.company,
+          phone: data.phone,
+          message: data.message,
+        }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(result.error || "Something went wrong. Please try again.");
+      }
+
+      setFormStatus("success");
+      setSentName(data.name || "");
+      form.reset();
+    } catch (error) {
+      setFormStatus("error");
+      setFormError(error.message || "Something went wrong. Please try again.");
+    }
+  }
 
   return (
     <main>
       <section className="hero">
+        <div className="hero-glow" aria-hidden="true" />
         <div className="hero-orbit" aria-hidden="true">
           <span className="orbit-ring" />
           <span className="orbit-dot" />
@@ -108,7 +150,9 @@ export default function Home() {
         </div>
         <p className="eyebrow fade-up delay-1">GQWebworks · Glenn Quezada</p>
         <h1 className="hero-title">
-          <span className="line fade-up delay-2">Freelance Web Developer</span>
+          <span className="line fade-up delay-2">
+            Freelance <span className="text-gradient">Web Developer</span>
+          </span>
           <span className="line fade-up delay-3">
             <em>for your next project</em>
           </span>
@@ -160,6 +204,7 @@ export default function Home() {
         <Reveal>
           <h2>
             Building custom <em>web solutions</em> for the Rio Grande Valley
+            and beyond
           </h2>
           <p className="lede tight">
             Sites, automations, and data tools — with a CS foundation and
@@ -193,9 +238,9 @@ export default function Home() {
             Services <em>I provide</em>
           </h2>
           <p className="lede tight">
-            As an independent expert with over a decade of experience, I offer
-            tailored web design and development services that align with your
-            business goals and deliver long-term value.
+            As an independent, experienced expert, I offer tailored web design
+            and development services that align with your business goals and
+            deliver long-term value.
           </p>
         </Reveal>
         <div className="services-grid">
@@ -441,10 +486,15 @@ export default function Home() {
                   Share your project details and I'll do my best to reply within 24
                   hours
                 </p>
-                <form
-                  className="contact-form"
-                  onSubmit={(event) => event.preventDefault()}
-                >
+                <form className="contact-form" onSubmit={handleContactSubmit}>
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex="-1"
+                    autoComplete="off"
+                    className="hp-field"
+                    aria-hidden="true"
+                  />
                   <div className="form-group">
                     <label htmlFor="project-type">
                       What are you looking to get done?
@@ -478,9 +528,18 @@ export default function Home() {
                     <label htmlFor="message">Message</label>
                     <textarea id="message" name="message" rows={5} required />
                   </div>
-                  <button type="submit" className="cta-dark">
-                    Send Message
+                  <button
+                    type="submit"
+                    className="cta-dark"
+                    disabled={formStatus === "sending"}
+                  >
+                    {formStatus === "sending" ? "Sending…" : "Send Message"}
                   </button>
+                  {formStatus === "error" && (
+                    <p className="form-status form-status-error" role="alert">
+                      {formError}
+                    </p>
+                  )}
                 </form>
               </div>
             )}
@@ -535,6 +594,12 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
+
+      <SuccessModal
+        open={formStatus === "success"}
+        onClose={() => setFormStatus("idle")}
+        name={sentName}
+      />
     </main>
   );
 }
