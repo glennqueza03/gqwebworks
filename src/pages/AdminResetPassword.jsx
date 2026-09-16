@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import PasswordField from "../components/PasswordField.jsx";
 
 export default function AdminResetPassword() {
   const token = new URLSearchParams(window.location.search).get("token") || "";
@@ -76,28 +77,24 @@ export default function AdminResetPassword() {
         <form className="admin-login-card" onSubmit={handleSubmit}>
           <p className="eyebrow">GQWebworks · Admin</p>
           <h1>Set a new password</h1>
-          <div className="form-group">
-            <label htmlFor="new-password">New password</label>
-            <input
-              id="new-password"
-              type="password"
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="confirm-password">Confirm password</label>
-            <input
-              id="confirm-password"
-              type="password"
-              minLength={8}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              required
-            />
-          </div>
+          <PasswordField
+            id="new-password"
+            label="New password"
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <PasswordField
+            id="confirm-password"
+            label="Confirm password"
+            minLength={8}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+          />
           <button type="submit" className="cta-dark" disabled={status === "loading"}>
             {status === "loading" ? "Updating…" : "Update password"}
           </button>

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import PasswordField from "../components/PasswordField.jsx";
 
 const PROJECT_TYPE_LABELS = {
   website: "Website Development",
@@ -68,17 +69,14 @@ function LoginForm({ onSuccess }) {
             required
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="admin-password">Password</label>
-          <input
-            id="admin-password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+        <PasswordField
+          id="admin-password"
+          label="Password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
         <button type="submit" className="cta-dark" disabled={status === "loading"}>
           {status === "loading" ? "Signing in…" : "Sign in"}
         </button>
